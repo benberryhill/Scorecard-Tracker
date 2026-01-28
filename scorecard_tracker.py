@@ -1,4 +1,4 @@
-VERSION = "1.0.0" # UPDATE THIS NUMBER ON GITHUB TO TRIGGER UPDATES
+VERSION = "1.0.1" # UPDATE THIS NUMBER ON GITHUB TO TRIGGER UPDATES
 import pandas as pd
 import tkinter as tk
 import tkinter.font as tkFont
