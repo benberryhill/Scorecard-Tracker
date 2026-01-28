@@ -15,8 +15,7 @@ from tkcalendar import DateEntry
 
 # --- CONFIGURATION ---
 # IMPORTANT: Use the "Raw" view URL from GitHub
-# Example: "https://raw.githubusercontent.com/YourUser/YourRepo/main/scorecard_tracker.py"
-GITHUB_RAW_URL = "https://https://raw.githubusercontent.com/benberryhill/Scorecard-Tracker/refs/heads/master/scorecard_tracker.py"
+GITHUB_RAW_URL = "https://raw.githubusercontent.com/benberryhill/Scorecard-Tracker/refs/heads/working_branch/scorecard_tracker.py"
 SCRIPT_NAME = "scorecard_tracker.py"
 
 class Launcher:
@@ -119,8 +118,14 @@ class Launcher:
                 self.update_status("Offline mode.")
 
         except Exception as e:
+            # CHANGE THIS BLOCK TEMPORARILY TO SEE THE ERROR
             print(f"Update error: {e}")
-            self.update_status("Network error. Launching local...")
+            self.update_status(f"Error: {str(e)[:40]}...") # Show first 40 chars of error in UI
+            # messagebox.showerror("Update Failed", f"Detailed error:\n{e}") # Uncomment this for a popup
+            
+            # Wait a moment so you can read the error before launching local
+            self.root.after(3000, self.launch_app)
+            return 
         
         # 3. Launch
         self.root.after(1000, self.launch_app)
