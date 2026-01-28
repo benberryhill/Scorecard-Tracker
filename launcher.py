@@ -16,7 +16,7 @@ from tkcalendar import DateEntry
 # --- CONFIGURATION ---
 # IMPORTANT: Use the "Raw" view URL from GitHub
 # Example: "https://raw.githubusercontent.com/YourUser/YourRepo/main/scorecard_tracker.py"
-GITHUB_RAW_URL = "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO_NAME/main/scorecard_tracker.py"
+GITHUB_RAW_URL = "https://https://raw.githubusercontent.com/benberryhill/Scorecard-Tracker/refs/heads/master/scorecard_tracker.py"
 SCRIPT_NAME = "scorecard_tracker.py"
 
 class Launcher:
