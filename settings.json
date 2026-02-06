@@ -1,4 +1,10 @@
 {
     "weekly_path": "C:\\Users\\bjtur\\Documents\\repositories\\Scorecard Tracker\\Weekly_Scorecards",
-    "trailing_path": "C:\\Users\\bjtur\\Documents\\repositories\\Scorecard Tracker\\Six_Week_Trailing"
+    "trailing_path": "C:\\Users\\bjtur\\Documents\\repositories\\Scorecard Tracker\\Six_Week_Trailing",
+    "summary_metrics": [
+        "DCR",
+        "FICO Metric",
+        "POD"
+    ],
+    "theme": "light"
 }
