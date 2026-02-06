@@ -2,8 +2,6 @@ import os
 import sys
 import requests
 import importlib.util
-import tkinter as tk
-from tkinter import ttk, messagebox
 import threading
 import re
 
@@ -11,7 +9,12 @@ import re
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import tkinter.font as tkFont 
-from tkcalendar import DateEntry
+import pandas
+import numpy
+import openpyxl
+import tkcalendar
+import tksheet
+import babel.numbers
 
 # --- CONFIGURATION ---
 # IMPORTANT: Use the "Raw" view URL from GitHub
