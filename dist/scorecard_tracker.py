@@ -1,4 +1,4 @@
-VERSION = "1.0.2" 
+VERSION = "1.0.3" 
 import pandas as pd
 import numpy as np
 import tkinter as tk
@@ -37,6 +37,7 @@ class ScorecardApp:
         
         self.df = pd.DataFrame()
         self.filtered_df = pd.DataFrame()
+        self.final_view_df = pd.DataFrame()
         
         # UPDATED METRICS CONFIGURATION based on request
         # "col" = CSV Column Name
@@ -464,7 +465,10 @@ class ScorecardApp:
         self.sheet.set_sheet_data([[]])
         self.sheet.dehighlight_all()
         
-        if self.filtered_df.empty: return
+        if self.filtered_df.empty: 
+            self.final_view_df = pd.DataFrame() # Reset final view
+            self.calculate_summary() # Update summary to empty
+            return
 
         # Columns to View
         all_cols = list(self.filtered_df.columns)
@@ -506,6 +510,11 @@ class ScorecardApp:
                 final_rows.append(display_data)
                 original_indices.append(idx)
 
+        if original_indices:
+            self.final_view_df = self.filtered_df.loc[original_indices].copy()
+        else:
+            self.final_view_df = pd.DataFrame(columns=self.filtered_df.columns)
+
         # Set Data
         self.sheet.headers(view_cols)
         self.sheet.set_sheet_data(final_rows)
@@ -514,45 +523,53 @@ class ScorecardApp:
         bg_color = "#ffcccc" # Light Red
         if self.settings.get("theme") == "dark":
             bg_color = "#8b3a3a"  # Darker red for dark mode to be readable
-        
-        for r_idx, row_idx in enumerate(original_indices):
-            row_data = self.filtered_df.loc[row_idx]
+
+        # Note: final_rows corresponds 1:1 with self.final_view_df now
+        # But for highlighting, we need to map column indices correctly
+        for r_idx, _ in enumerate(final_rows):
+            # Get the actual data row from our new synced dataframe
+            row_data = self.final_view_df.iloc[r_idx]
+            
             for c_idx, col_name in enumerate(view_cols):
                 if col_name in thresholds:
                     rules = thresholds[col_name]
-                    val = row_data[col_name]
-                    
-                    if not pd.isna(val):
-                        if (rules["op"] == "<" and val < rules["limit"]) or \
-                            (rules["op"] == ">" and val > rules["limit"]):
-                            self.sheet.highlight_cells(row=r_idx, column=c_idx, bg=bg_color)
+                    if col_name in row_data:
+                        val = row_data[col_name]
+                        if not pd.isna(val):
+                            if (rules["op"] == "<" and val < rules["limit"]) or \
+                                (rules["op"] == ">" and val > rules["limit"]):
+                                self.sheet.highlight_cells(row=r_idx, column=c_idx, bg=bg_color)
 
         self.summary_label.config(text=f"Rows Displayed: {len(final_rows)}")
         self.sheet.set_all_cell_sizes_to_text()
 
+        # Recalculate summary based on what is actually visible
+        self.calculate_summary()
+
     def calculate_summary(self):
-        if self.filtered_df.empty:
+        # Use final_view_df so calculations match exactly what is on screen
+        df_to_calc = self.final_view_df
+
+        if df_to_calc.empty:
             self.summary_label.config(text="No data selected.")
             return
 
         # Mandatory Metrics
-        txt_parts = [f"Count: {len(self.filtered_df)}"]
+        txt_parts = [f"Count: {len(df_to_calc)}"]
         
-        if "Packages Delivered" in self.filtered_df.columns:
-            total_pkgs = self.filtered_df["Packages Delivered"].sum()
+        if "Packages Delivered" in df_to_calc.columns:
+            total_pkgs = df_to_calc["Packages Delivered"].sum()
             txt_parts.append(f"Total Pkgs: {int(total_pkgs):,}")
             
-        if "Overall Score" in self.filtered_df.columns:
-            avg_overall = self.filtered_df["Overall Score"].mean()
+        if "Overall Score" in df_to_calc.columns:
+            avg_overall = df_to_calc["Overall Score"].mean()
             txt_parts.append(f"Overall Score: {avg_overall:.2f}")
 
         # Configured Metrics from Settings
         user_metrics = self.settings.get("summary_metrics", [])
         for col in user_metrics:
-            if col in self.filtered_df.columns:
-                # Special logic: "Rate" usually average, "DPMO" usually average
-                # Just doing average for all scores/rates
-                vals = self.filtered_df[col].dropna()
+            if col in df_to_calc.columns:
+                vals = df_to_calc[col].dropna()
                 if not vals.empty:
                     avg_val = vals.mean()
                     txt_parts.append(f"{col}: {avg_val:.2f}")
@@ -646,23 +663,29 @@ class ScorecardApp:
                             if is_violation(col, val):
                                 cell.fill = red_fill
                         current_row += 1
-                    
+
                     # Totals Row
                     ws.cell(row=current_row, column=1, value=f"{emp} Totals/Avgs").font = bold_font
-                    
+
                     for c_idx, col in enumerate(view_cols):
                         if col == "Delivery Associate" or col == "Week": continue
                         
-                        # Calculate avg or sum
-                        if col == "Packages Delivered":
-                            val = emp_data[col].sum()
-                        elif col in self.metrics:
-                            val = emp_data[col].mean()
-                        else:
-                            val = ""
+                        # Convert column to numeric to check if calculation is possible
+                        # This ensures ALL numeric columns get averaged, not just specific ones
+                        try:
+                            series = pd.to_numeric(emp_data[col], errors='coerce')
                             
-                        if isinstance(val, (int, float)):
-                            ws.cell(row=current_row, column=c_idx+1, value=round(val, 2)).font = bold_font
+                            if col == "Packages Delivered":
+                                val = series.sum()
+                            elif not series.dropna().empty:
+                                val = series.mean()
+                            else:
+                                val = ""
+                                
+                            if isinstance(val, (int, float)):
+                                ws.cell(row=current_row, column=c_idx+1, value=round(val, 2)).font = bold_font
+                        except:
+                            pass # Skip non-numeric columns
                             
                     current_row += 2 # Add space between employees
 

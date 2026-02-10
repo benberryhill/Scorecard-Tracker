@@ -167,3 +167,5 @@ if __name__ == "__main__":
         os.chdir(application_path)
     
     Launcher()
+
+# pyinstaller --noconsole --onefile --name="Scorecard Tracker App" --collect-all tksheet --collect-all tkcalendar --collect-all babel --collect-all pandas --collect-all numpy --collect-all openpyxl --collect-all tkinter launcher.py
